@@ -135,10 +135,7 @@ function App() {
     <div className="app-container">
       <header>
         <img 
-          src="/logo.jpg" // Ensure the image is in the public folder
-          alt="Company Logo"
-          className="company-logo"
-        />
+          src="/logo.jpg" alt="Company Logo" className="company-logo" />
         <h1>Sampling Guide</h1>
       </header>
       <main>
