@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import data from './data.json';  // Your existing data
 import { saveAs } from 'file-saver'; // For downloading the file
 import * as XLSX from 'xlsx'; // Import xlsx for Excel export
 import { setLogLevel } from "firebase/app";
 import { ref, set, onValue } from "firebase/database";
-import database from "./firebaseConfig"; // Import Firebase configuration
-import data from "./data.json"; // Import your data
-import "./App.css";
+import database from './firebaseConfig'; // Import Firebase configuration
+import './App.css';  // Import your styles
 
 // Enable Firebase Debug Logs
 setLogLevel("debug");
@@ -29,7 +29,7 @@ function App() {
     if (category) {
       const values = [...new Set(guideData.map(item => item[category] || "N/A"))];
       setUniqueValues(values);
-      setFilteredData([]); // Clear filtered data when category changes
+      setFilteredData([]);
     }
   }, [category, guideData]);
 
@@ -134,11 +134,16 @@ function App() {
   return (
     <div className="app-container">
       <header>
+        <img 
+          src="/logo.jpg" // Ensure the image is in the public folder
+          alt="Company Logo"
+          className="company-logo"
+        />
         <h1>Sampling Guide</h1>
       </header>
       <main>
         <button onClick={exportToExcel}>Export to Excel</button>
-        
+
         <div>
           <label>Select Category:</label>
           <select onChange={handleCategoryChange} value={category}>
@@ -222,3 +227,4 @@ function App() {
 }
 
 export default App;
+
