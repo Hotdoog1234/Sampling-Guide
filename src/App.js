@@ -1,8 +1,4 @@
 import React, { useState, useEffect } from 'react';
-<<<<<<< HEAD
-import data from './data.json';
-import './App.css';
-=======
 import { saveAs } from 'file-saver'; // For downloading the file
 import * as XLSX from 'xlsx'; // Import xlsx for Excel export
 import { setLogLevel } from "firebase/app";
@@ -13,7 +9,6 @@ import "./App.css";
 
 // Enable Firebase Debug Logs
 setLogLevel("debug");
->>>>>>> development
 
 function App() {
   const [guideData] = useState(data);
@@ -26,37 +21,15 @@ function App() {
     "Sampling Frequency"
   ]);
   const [uniqueValues, setUniqueValues] = useState([]);
-<<<<<<< HEAD
-  const [filteredData, setFilteredData] = useState([]); // Start with an empty array
-  const [datesSampled, setDatesSampled] = useState({});
-=======
   const [filteredData, setFilteredData] = useState([]);
   const [datesSampled, setDatesSampled] = useState({});
   const [samplerNames, setSamplerNames] = useState({}); // New state for storing sampler names
->>>>>>> development
 
   useEffect(() => {
     if (category) {
       const values = [...new Set(guideData.map(item => item[category] || "N/A"))];
       setUniqueValues(values);
-<<<<<<< HEAD
-      setFilteredData([]); // Reset filtered data when category changes
-    }
-  }, [category, guideData]);
-
-  // Load initial dates from localStorage
-  useEffect(() => {
-    const initialDates = {};
-    guideData.forEach(item => {
-      const siteName = item["Site Name"];
-      if (siteName) {
-        initialDates[siteName] = localStorage.getItem(`dateSampled-${siteName}`) || "";
-      }
-    });
-    setDatesSampled(initialDates);
-  }, [guideData]);
-=======
-      setFilteredData([]);
+      setFilteredData([]); // Clear filtered data when category changes
     }
   }, [category, guideData]);
 
@@ -76,7 +49,6 @@ function App() {
       setSamplerNames(data); // Update the state
     });
   }, []);
->>>>>>> development
 
   const handleCategoryChange = (event) => {
     setCategory(event.target.value);
@@ -93,18 +65,6 @@ function App() {
   };
 
   const handleDateChange = (siteName, date) => {
-<<<<<<< HEAD
-    setDatesSampled(prevDates => ({
-      ...prevDates,
-      [siteName]: date
-    }));
-    localStorage.setItem(`dateSampled-${siteName}`, date);
-  };
-
-  const openGoogleMaps = (longitude, latitude) => {
-const lon = parseFloat(longitude);    
-const lat = parseFloat(latitude);
-=======
     // Sanitize the siteName by replacing invalid characters
     const sanitizedSiteName = siteName.replace(/[.#$[\]]/g, "_");
 
@@ -139,7 +99,6 @@ const lat = parseFloat(latitude);
   const openGoogleMaps = (longitude, latitude) => {
     const lon = parseFloat(longitude);
     const lat = parseFloat(latitude);
->>>>>>> development
 
     if (!isNaN(lat) && !isNaN(lon)) {
       const url = `https://www.google.com/maps?q=${lat},${lon}`;
@@ -149,15 +108,6 @@ const lat = parseFloat(latitude);
     }
   };
 
-<<<<<<< HEAD
-  return (
-    <div className="app-container">
-      <header>
-        <img src={`${process.env.PUBLIC_URL}/logo.jpg`} alt="Company Logo" className="company-logo" />
-        <h1>Sampling Guide</h1>
-      </header>
-      <main>
-=======
   // Function to export data to Excel
   const exportToExcel = () => {
     // Prepare the data structure for Excel
@@ -189,7 +139,6 @@ const lat = parseFloat(latitude);
       <main>
         <button onClick={exportToExcel}>Export to Excel</button>
         
->>>>>>> development
         <div>
           <label>Select Category:</label>
           <select onChange={handleCategoryChange} value={category}>
@@ -216,13 +165,9 @@ const lat = parseFloat(latitude);
           {filteredData.length > 0 ? (
             filteredData.map((item, index) => {
               const siteName = item["Site Name"];
-<<<<<<< HEAD
-              const dateSampled = datesSampled[siteName] || "";
-=======
               const sanitizedSiteName = siteName.replace(/[.#$[\]]/g, "_");
               const dateSampled = datesSampled[sanitizedSiteName]?.date || "";
               const samplerName = samplerNames[sanitizedSiteName]?.samplerName || ""; // Get sampler name
->>>>>>> development
               const latitude = item["Latitude"];
               const longitude = item["Longitude"];
 
@@ -241,10 +186,7 @@ const lat = parseFloat(latitude);
                   <p><strong>Sampling Frequency:</strong> {item["Sampling Frequency"] || "N/A"}</p>
                   <p><strong>Sampling Status:</strong> {item["Sampling Status"] || "N/A"}</p>
                   <p><strong>Parameters:</strong> {item["Parameters"] || "N/A"}</p>
-<<<<<<< HEAD
-=======
 
->>>>>>> development
                   <label><strong>Date Sampled:</strong></label>
                   <input 
                     type="date" 
@@ -252,8 +194,6 @@ const lat = parseFloat(latitude);
                     onChange={(e) => handleDateChange(siteName, e.target.value)} 
                   />
                   <br />
-<<<<<<< HEAD
-=======
 
                   <label><strong>Who did the Sampling:</strong></label>
                   <input
@@ -264,7 +204,6 @@ const lat = parseFloat(latitude);
                   />
                   <br />
 
->>>>>>> development
                   <button onClick={() => openGoogleMaps(latitude, longitude)}>Google Maps</button>
                   <hr />
                 </div>
@@ -276,18 +215,10 @@ const lat = parseFloat(latitude);
         </section>
       </main>
       <footer>
-<<<<<<< HEAD
-        <p>&copy; 2024 Sampling Guide</p>
-=======
         <p>&copy; 2024 Shield Environmental Associates Sampling Guide</p>
->>>>>>> development
       </footer>
     </div>
   );
 }
 
 export default App;
-<<<<<<< HEAD
-=======
-
->>>>>>> development
