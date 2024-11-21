@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import data from './data.json';
-import database from './firebaseConfig'; // Import the Firebase configuration
+import { saveAs } from 'file-saver'; // For downloading the file
+import * as XLSX from 'xlsx'; // Import xlsx for Excel export
+import { setLogLevel } from "firebase/app";
 import { ref, set, onValue } from "firebase/database";
-import './App.css';
+import database from "./firebaseConfig"; // Import Firebase configuration
+import data from "./data.json"; // Import your data
+import "./App.css";
+
+// Enable Firebase Debug Logs
+setLogLevel("debug");
 
 function App() {
   const [guideData] = useState(data);
@@ -17,6 +23,7 @@ function App() {
   const [uniqueValues, setUniqueValues] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [datesSampled, setDatesSampled] = useState({});
+  const [samplerNames, setSamplerNames] = useState({}); // New state for storing sampler names
 
   useEffect(() => {
     if (category) {
@@ -26,12 +33,20 @@ function App() {
     }
   }, [category, guideData]);
 
-  // Load initial data from Firebase in real time
+  // Fetch data from Firebase in real-time
   useEffect(() => {
     const datesRef = ref(database, "dates");
     onValue(datesRef, (snapshot) => {
       const data = snapshot.val() || {};
-      setDatesSampled(data);
+      console.log("Fetched dates from Firebase:", data); // Debug log
+      setDatesSampled(data); // Update the state
+    });
+
+    const samplerRef = ref(database, "samplers"); // Fetch sampler names
+    onValue(samplerRef, (snapshot) => {
+      const data = snapshot.val() || {};
+      console.log("Fetched sampler names from Firebase:", data); // Debug log
+      setSamplerNames(data); // Update the state
     });
   }, []);
 
@@ -50,16 +65,35 @@ function App() {
   };
 
   const handleDateChange = (siteName, date) => {
-    setDatesSampled(prevDates => ({
-      ...prevDates,
-      [siteName]: date
-    }));
+    // Sanitize the siteName by replacing invalid characters
+    const sanitizedSiteName = siteName.replace(/[.#$[\]]/g, "_");
 
-    // Write the updated date to Firebase
-    const dateRef = ref(database, `dates/${siteName}`);
+    console.log("Attempting to write to Firebase:", { siteName, date });
+
+    const dateRef = ref(database, `dates/${sanitizedSiteName}`);
     set(dateRef, { date })
-      .then(() => console.log("Date updated successfully!"))
-      .catch((error) => console.error("Error updating date: ", error));
+      .then(() => {
+        console.log("Successfully written to Firebase:", { sanitizedSiteName, date });
+      })
+      .catch((error) => {
+        console.error("Error writing to Firebase:", error);
+      });
+  };
+
+  // Handle the change of sampler name input
+  const handleSamplingChange = (siteName, samplerName) => {
+    const sanitizedSiteName = siteName.replace(/[.#$[\]]/g, "_");
+
+    console.log("Attempting to write sampler to Firebase:", { siteName, samplerName });
+
+    const samplerRef = ref(database, `samplers/${sanitizedSiteName}`);
+    set(samplerRef, { samplerName })
+      .then(() => {
+        console.log("Successfully written sampler to Firebase:", { sanitizedSiteName, samplerName });
+      })
+      .catch((error) => {
+        console.error("Error writing sampler to Firebase:", error);
+      });
   };
 
   const openGoogleMaps = (longitude, latitude) => {
@@ -74,13 +108,37 @@ function App() {
     }
   };
 
+  // Function to export data to Excel
+  const exportToExcel = () => {
+    // Prepare the data structure for Excel
+    const excelData = Object.keys(datesSampled).map((siteName) => ({
+      SiteName: siteName,
+      DateSampled: datesSampled[siteName].date,
+      Sampler: samplerNames[siteName]?.samplerName || "N/A" // Adding sampler name to the data
+    }));
+
+    // Create a new worksheet from the data
+    const ws = XLSX.utils.json_to_sheet(excelData);
+
+    // Create a new workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Site Data");
+
+    // Write the workbook to a file
+    const excelFile = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+
+    // Use file-saver to download the file
+    saveAs(new Blob([excelFile]), "sampling_guide_data.xlsx");
+  };
+
   return (
     <div className="app-container">
       <header>
-        <img src={`${process.env.PUBLIC_URL}/logo.jpg`} alt="Company Logo" className="company-logo" />
         <h1>Sampling Guide</h1>
       </header>
       <main>
+        <button onClick={exportToExcel}>Export to Excel</button>
+        
         <div>
           <label>Select Category:</label>
           <select onChange={handleCategoryChange} value={category}>
@@ -107,7 +165,9 @@ function App() {
           {filteredData.length > 0 ? (
             filteredData.map((item, index) => {
               const siteName = item["Site Name"];
-              const dateSampled = datesSampled[siteName] || "";
+              const sanitizedSiteName = siteName.replace(/[.#$[\]]/g, "_");
+              const dateSampled = datesSampled[sanitizedSiteName]?.date || "";
+              const samplerName = samplerNames[sanitizedSiteName]?.samplerName || ""; // Get sampler name
               const latitude = item["Latitude"];
               const longitude = item["Longitude"];
 
@@ -126,6 +186,7 @@ function App() {
                   <p><strong>Sampling Frequency:</strong> {item["Sampling Frequency"] || "N/A"}</p>
                   <p><strong>Sampling Status:</strong> {item["Sampling Status"] || "N/A"}</p>
                   <p><strong>Parameters:</strong> {item["Parameters"] || "N/A"}</p>
+
                   <label><strong>Date Sampled:</strong></label>
                   <input 
                     type="date" 
@@ -133,6 +194,16 @@ function App() {
                     onChange={(e) => handleDateChange(siteName, e.target.value)} 
                   />
                   <br />
+
+                  <label><strong>Who did the Sampling:</strong></label>
+                  <input
+                    type="text"
+                    value={samplerName}
+                    onChange={(e) => handleSamplingChange(siteName, e.target.value)}
+                    placeholder="Enter name"
+                  />
+                  <br />
+
                   <button onClick={() => openGoogleMaps(latitude, longitude)}>Google Maps</button>
                   <hr />
                 </div>
@@ -144,10 +215,11 @@ function App() {
         </section>
       </main>
       <footer>
-        <p>&copy; 2024 Sampling Guide</p>
+        <p>&copy; 2024 Shield Environmental Associates Sampling Guide</p>
       </footer>
     </div>
   );
 }
 
 export default App;
+
