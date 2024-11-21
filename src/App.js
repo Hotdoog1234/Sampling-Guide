@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import data from './data.json';
+import database from './firebaseConfig'; // Import the Firebase configuration
+import { ref, set, onValue } from "firebase/database";
 import './App.css';
 
 function App() {
@@ -13,28 +15,25 @@ function App() {
     "Sampling Frequency"
   ]);
   const [uniqueValues, setUniqueValues] = useState([]);
-  const [filteredData, setFilteredData] = useState([]); // Start with an empty array
+  const [filteredData, setFilteredData] = useState([]);
   const [datesSampled, setDatesSampled] = useState({});
 
   useEffect(() => {
     if (category) {
       const values = [...new Set(guideData.map(item => item[category] || "N/A"))];
       setUniqueValues(values);
-      setFilteredData([]); // Reset filtered data when category changes
+      setFilteredData([]);
     }
   }, [category, guideData]);
 
-  // Load initial dates from localStorage
+  // Load initial data from Firebase in real time
   useEffect(() => {
-    const initialDates = {};
-    guideData.forEach(item => {
-      const siteName = item["Site Name"];
-      if (siteName) {
-        initialDates[siteName] = localStorage.getItem(`dateSampled-${siteName}`) || "";
-      }
+    const datesRef = ref(database, "dates");
+    onValue(datesRef, (snapshot) => {
+      const data = snapshot.val() || {};
+      setDatesSampled(data);
     });
-    setDatesSampled(initialDates);
-  }, [guideData]);
+  }, []);
 
   const handleCategoryChange = (event) => {
     setCategory(event.target.value);
@@ -55,12 +54,17 @@ function App() {
       ...prevDates,
       [siteName]: date
     }));
-    localStorage.setItem(`dateSampled-${siteName}`, date);
+
+    // Write the updated date to Firebase
+    const dateRef = ref(database, `dates/${siteName}`);
+    set(dateRef, { date })
+      .then(() => console.log("Date updated successfully!"))
+      .catch((error) => console.error("Error updating date: ", error));
   };
 
   const openGoogleMaps = (longitude, latitude) => {
-const lon = parseFloat(longitude);    
-const lat = parseFloat(latitude);
+    const lon = parseFloat(longitude);
+    const lat = parseFloat(latitude);
 
     if (!isNaN(lat) && !isNaN(lon)) {
       const url = `https://www.google.com/maps?q=${lat},${lon}`;
