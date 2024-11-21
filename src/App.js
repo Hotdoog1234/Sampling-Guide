@@ -29,7 +29,7 @@ function App() {
     if (category) {
       const values = [...new Set(guideData.map(item => item[category] || "N/A"))];
       setUniqueValues(values);
-      setFilteredData([]); // Reset filtered data when category changes
+      setFilteredData([]);
     }
   }, [category, guideData]);
 
@@ -60,7 +60,7 @@ function App() {
       const filtered = guideData.filter(item => (item[category] || "N/A") === selectedValue);
       setFilteredData(filtered);
     } else {
-      setFilteredData([]); // Clear filtered data if no value is selected
+      setFilteredData([]);
     }
   };
 
@@ -134,13 +134,12 @@ function App() {
   return (
     <div className="app-container">
       <header>
-        {/* Add company logo */}
-        <img src="/logo.jpg" alt="Company Logo" className="company-logo" />
+        <img src={`${process.env.PUBLIC_URL}/logo.jpg`} alt="Company Logo" className="company-logo" />
         <h1>Sampling Guide</h1>
       </header>
       <main>
         <button onClick={exportToExcel}>Export to Excel</button>
-        
+
         <div>
           <label>Select Category:</label>
           <select onChange={handleCategoryChange} value={category}>
@@ -224,3 +223,4 @@ function App() {
 }
 
 export default App;
+
